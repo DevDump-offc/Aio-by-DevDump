@@ -1,0 +1,52 @@
+const { MessageEmbed } = require('discord.js')
+this.config = require(`${process.cwd()}/config.json`)
+
+module.exports = {
+    name: 'removepremium',
+    aliases: ['remprem', '--'],
+    category: 'owner',
+    run: async (client, message, args) => {
+        const em1 = new MessageEmbed()
+        if (!this.config.prem.includes(message.author.id)) return
+        const embed = new MessageEmbed().setColor(client.color)
+        if (args[0]) {
+            try {
+                await client.users.fetch(args[0])
+            } catch (error) {
+                return message.channel.send('Invalid Id')
+            }
+            const use = await client.db.get(`uprem_${args[0]}`)
+            if (!use) {
+                return message.channel.send({
+                    embeds: [
+                        embed.setDescription(
+                            `<@${args[0]}> Is Not A Premium User Only!`
+                        )
+                    ]
+                })
+            }
+            const servers = (await client.db.get(`upremserver_${args[0]}`)) || []
+            for (const serverId of servers) {
+                await client.db.delete(`sprem_${serverId}`)
+                await client.db.delete(`spremend_${serverId}`)
+                await client.db.delete(`spremown_${serverId}`)
+                await client.db.delete(`spremnotif_${serverId}`)
+            }
+            await client.db.delete(`uprem_${args[0]}`)
+            await client.db.delete(`upremend_${args[0]}`)
+            await client.db.delete(`upremcount_${args[0]}`)
+            await client.db.delete(`upremserver_${args[0]}`)
+            await client.db.delete(`upremnotif_${args[0]}`)
+            return message.channel.send({
+                embeds: [
+                    embed.setDescription(
+                        `<@${args[0]}> Has Been Removed From A Premium User.`
+                    )
+                ]
+            })
+        } else
+            return message.channel.send({
+                embeds: [embed.setDescription(`Please Give The User Id`)]
+            })
+    }
+}
